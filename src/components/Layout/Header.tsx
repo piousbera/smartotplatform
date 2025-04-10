@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Settings } from "lucide-react";
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -20,6 +20,10 @@ export const Header = () => {
         </div>
         <div className="hidden md:flex items-center gap-6">
           <nav className="flex gap-4 text-sm">
+            <Link to="/admin" className="text-gray-700 hover:text-primary transition-colors flex items-center gap-1">
+              <Settings size={16} />
+              Admin
+            </Link>
             <Link to="/dashboard" className="text-gray-700 hover:text-primary transition-colors">
               Dashboard
             </Link>
@@ -53,6 +57,10 @@ export const Header = () => {
         {isMenuOpen && (
           <div className="md:hidden absolute top-16 inset-x-0 bg-white border-b border-gray-200 shadow-lg z-50">
             <div className="flex flex-col p-4 gap-2">
+              <Link to="/admin" className="py-2 px-4 hover:bg-gray-100 rounded-md flex items-center gap-2">
+                <Settings size={16} />
+                Admin
+              </Link>
               <Link to="/dashboard" className="py-2 px-4 hover:bg-gray-100 rounded-md">Dashboard</Link>
               <Link to="/builds" className="py-2 px-4 hover:bg-gray-100 rounded-md">My Builds</Link>
               <Link to="/integrations" className="py-2 px-4 hover:bg-gray-100 rounded-md">Integrations</Link>
