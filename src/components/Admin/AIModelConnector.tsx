@@ -18,17 +18,12 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { Brain, Check, ExternalLink, Loader2 } from "lucide-react";
+import { Brain, ExternalLink, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { Database } from "@/integrations/supabase/types";
 
-type AIConnection = {
-  id: string;
-  provider: string;
-  model: string;
-  is_active: boolean;
-  created_at: string;
-};
+type AIConnection = Database['public']['Tables']['ai_connections']['Row'];
 
 export const AIModelConnector = () => {
   const { toast } = useToast();
@@ -91,7 +86,7 @@ export const AIModelConnector = () => {
       
       // Store the API connection in the database
       // Note: In a production environment, you'd encrypt the API key before storing it
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('ai_connections')
         .insert({
           user_id: user.id,
@@ -99,8 +94,7 @@ export const AIModelConnector = () => {
           model: selectedModel,
           api_key_encrypted: apiKey, // In production, encrypt this value
           is_active: true
-        })
-        .select();
+        });
         
       if (error) throw error;
       
@@ -175,7 +169,7 @@ export const AIModelConnector = () => {
                 <div key={connection.id} className="flex justify-between items-center p-4 border rounded-lg bg-gray-50">
                   <div>
                     <p className="font-medium">{connection.provider.charAt(0).toUpperCase() + connection.provider.slice(1)} - {connection.model}</p>
-                    <p className="text-sm text-gray-500">Connected on {new Date(connection.created_at).toLocaleDateString()}</p>
+                    <p className="text-sm text-gray-500">Connected on {connection.created_at ? new Date(connection.created_at).toLocaleDateString() : 'N/A'}</p>
                   </div>
                   <Button 
                     variant="outline" 

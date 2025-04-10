@@ -7,14 +7,9 @@ import { useToast } from "@/components/ui/use-toast";
 import { Plus, Trash2, Edit, Save, X, AlertCircle, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { Database } from "@/integrations/supabase/types";
 
-type FAQ = {
-  id: string;
-  question: string;
-  answer: string;
-  source_url: string | null;
-  created_at: string;
-};
+type FAQ = Database['public']['Tables']['faqs']['Row'];
 
 export const FAQManager = ({ taskId }: { taskId?: string }) => {
   const { toast } = useToast();

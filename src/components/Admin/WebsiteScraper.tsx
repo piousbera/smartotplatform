@@ -9,19 +9,15 @@ import { Globe, Loader2, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Database } from "@/integrations/supabase/types";
+import { useNavigate } from "react-router-dom";
 
-type ScrapingTask = {
-  id: string;
-  url: string;
-  status: string;
-  completed_pages: number;
-  total_pages: number;
-  created_at: string;
-};
+type ScrapingTask = Database['public']['Tables']['scraping_tasks']['Row'];
 
 export const WebsiteScraper = () => {
   const { toast } = useToast();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [url, setUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -91,12 +87,15 @@ export const WebsiteScraper = () => {
           status: 'in_progress',
           total_pages: 5 // We're simulating 5 pages
         })
-        .select()
-        .single();
+        .select();
       
       if (error) throw error;
       
-      const taskId = data.id;
+      const taskId = data?.[0]?.id;
+      
+      if (!taskId) {
+        throw new Error("Failed to create scraping task");
+      }
       
       // Simulate the scraping process
       const mockPages = [
@@ -187,7 +186,7 @@ export const WebsiteScraper = () => {
       
       if (taskError) throw taskError;
       
-      if (!taskData.raw_content) {
+      if (!taskData?.raw_content) {
         throw new Error("No content available to generate FAQs from");
       }
       
@@ -245,12 +244,8 @@ export const WebsiteScraper = () => {
     }
   };
 
-  const viewFAQs = async (taskId: string) => {
-    // This would navigate to a page showing FAQs generated from this task
-    toast({
-      title: "View FAQs",
-      description: "This would navigate to a page showing all FAQs generated from this scraping task.",
-    });
+  const viewFAQs = (taskId: string) => {
+    navigate(`/faqs/${taskId}`);
   };
 
   return (
@@ -324,13 +319,13 @@ export const WebsiteScraper = () => {
                         ? 'bg-red-100 text-red-800'
                         : 'bg-gray-100 text-gray-800'
                     }`}>
-                      {task.status.charAt(0).toUpperCase() + task.status.slice(1).replace('_', ' ')}
+                      {task.status?.charAt(0).toUpperCase() + task.status?.slice(1).replace('_', ' ')}
                     </span>
                   </TableCell>
                   <TableCell>
                     <span>{task.completed_pages} / {task.total_pages}</span>
                   </TableCell>
-                  <TableCell>{new Date(task.created_at).toLocaleString()}</TableCell>
+                  <TableCell>{task.created_at ? new Date(task.created_at).toLocaleString() : 'N/A'}</TableCell>
                   <TableCell>
                     <div className="flex space-x-2">
                       <Button 
