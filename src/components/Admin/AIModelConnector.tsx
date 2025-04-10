@@ -1,19 +1,68 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { Brain, Check, ExternalLink } from "lucide-react";
+import { Brain, Check, ExternalLink, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+
+type AIConnection = {
+  id: string;
+  provider: string;
+  model: string;
+  is_active: boolean;
+  created_at: string;
+};
 
 export const AIModelConnector = () => {
   const { toast } = useToast();
-  const [selectedModel, setSelectedModel] = useState("");
+  const { user } = useAuth();
+  const [selectedProvider, setSelectedProvider] = useState("openai");
+  const [selectedModel, setSelectedModel] = useState("gpt-4o-mini");
   const [apiKey, setApiKey] = useState("");
   const [isConnecting, setIsConnecting] = useState(false);
+  const [connections, setConnections] = useState<AIConnection[]>([]);
   
-  const handleConnect = () => {
+  useEffect(() => {
+    if (user) {
+      fetchConnections();
+    }
+  }, [user]);
+
+  const fetchConnections = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('ai_connections')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        throw error;
+      }
+      
+      setConnections(data || []);
+    } catch (error) {
+      console.error('Error fetching AI connections:', error);
+    }
+  };
+  
+  const handleConnect = async () => {
     if (!selectedModel || !apiKey) {
       toast({
         title: "Missing information",
@@ -23,17 +72,85 @@ export const AIModelConnector = () => {
       return;
     }
 
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to use this feature.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsConnecting(true);
     
-    // Simulate connection process
-    setTimeout(() => {
+    try {
+      // Validate the API key format (this is just a basic check)
+      if (selectedProvider === 'openai' && !apiKey.startsWith('sk-')) {
+        throw new Error("Invalid OpenAI API key format. Keys should start with 'sk-'");
+      }
+      
+      // Store the API connection in the database
+      // Note: In a production environment, you'd encrypt the API key before storing it
+      const { data, error } = await supabase
+        .from('ai_connections')
+        .insert({
+          user_id: user.id,
+          provider: selectedProvider,
+          model: selectedModel,
+          api_key_encrypted: apiKey, // In production, encrypt this value
+          is_active: true
+        })
+        .select();
+        
+      if (error) throw error;
+      
       toast({
         title: "Connection successful",
         description: `Successfully connected to ${selectedModel} API.`,
         duration: 5000,
       });
+      
+      // Clear the form
+      setApiKey("");
+      
+      // Refresh connections
+      fetchConnections();
+    } catch (error: any) {
+      console.error('Error connecting to AI model:', error);
+      toast({
+        title: "Connection failed",
+        description: error.message || "Failed to connect to AI model.",
+        variant: "destructive",
+      });
+    } finally {
       setIsConnecting(false);
-    }, 2000);
+    }
+  };
+
+  const handleDisconnect = async (connectionId: string) => {
+    try {
+      const { error } = await supabase
+        .from('ai_connections')
+        .delete()
+        .eq('id', connectionId);
+        
+      if (error) throw error;
+      
+      toast({
+        title: "Disconnected",
+        description: "Successfully removed the AI connection.",
+      });
+      
+      // Refresh connections
+      fetchConnections();
+    } catch (error: any) {
+      console.error('Error disconnecting AI model:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to disconnect the AI model.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -43,6 +160,38 @@ export const AIModelConnector = () => {
         Connect your preferred AI models to enhance your chatbot's capabilities. These models will be used for website scraping, FAQ generation, and response generation.
       </p>
       
+      {/* Active Connections */}
+      {connections.length > 0 && (
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Active Connections</CardTitle>
+            <CardDescription>
+              Your currently connected AI models
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {connections.map((connection) => (
+                <div key={connection.id} className="flex justify-between items-center p-4 border rounded-lg bg-gray-50">
+                  <div>
+                    <p className="font-medium">{connection.provider.charAt(0).toUpperCase() + connection.provider.slice(1)} - {connection.model}</p>
+                    <p className="text-sm text-gray-500">Connected on {new Date(connection.created_at).toLocaleDateString()}</p>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => handleDisconnect(connection.id)}
+                  >
+                    Disconnect
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      
+      {/* Connect New Models */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card>
           <CardHeader>
@@ -50,7 +199,7 @@ export const AIModelConnector = () => {
               <Brain size={20} /> OpenAI
             </CardTitle>
             <CardDescription>
-              Connect to GPT-4o or GPT-4.5 for powerful language processing
+              Connect to GPT-4o or GPT-4o-mini for powerful language processing
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -63,7 +212,6 @@ export const AIModelConnector = () => {
                 <SelectContent>
                   <SelectItem value="gpt-4o-mini">GPT-4o-mini</SelectItem>
                   <SelectItem value="gpt-4o">GPT-4o</SelectItem>
-                  <SelectItem value="gpt-4.5-preview">GPT-4.5 Preview</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -88,7 +236,14 @@ export const AIModelConnector = () => {
               disabled={isConnecting}
               className="w-full"
             >
-              {isConnecting ? "Connecting..." : "Connect"}
+              {isConnecting ? (
+                <>
+                  <Loader2 size={16} className="mr-2 animate-spin" />
+                  Connecting...
+                </>
+              ) : (
+                "Connect"
+              )}
             </Button>
           </CardFooter>
         </Card>

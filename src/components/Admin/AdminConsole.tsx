@@ -6,37 +6,46 @@ import { AIModelConnector } from "./AIModelConnector";
 import { WebsiteScraper } from "./WebsiteScraper";
 import { UserManagement } from "./UserManagement";
 import { DeploymentSettings } from "./DeploymentSettings";
-import { Lock } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 export const AdminConsole = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLoginRedirect = () => {
+    navigate("/login");
+  };
 
   return (
     <div className="container py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Admin Console</h1>
-        <p className="text-gray-600">
-          Manage AI models, users, and deployment settings
-        </p>
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">Admin Console</h1>
+          <p className="text-gray-600">
+            Manage AI models, users, and deployment settings
+          </p>
+        </div>
+        {user && (
+          <Button variant="outline" onClick={signOut}>
+            Sign Out
+          </Button>
+        )}
       </div>
 
-      {!isAuthenticated ? (
+      {!user ? (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Lock size={20} /> Authentication Required
-            </CardTitle>
+            <CardTitle>Authentication Required</CardTitle>
             <CardDescription>
-              Please connect your application to Supabase to enable authentication and admin features.
+              Please sign in to access the admin features.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="bg-amber-50 border border-amber-200 p-4 rounded-md text-amber-800">
-              <p className="font-medium">Connect to Supabase</p>
-              <p className="text-sm mt-1">
-                To use the admin console, you need to connect your application to Supabase for authentication and database services. Click the green Supabase button at the top right of the Lovable interface to set up the connection.
-              </p>
-            </div>
+            <Button onClick={handleLoginRedirect}>
+              Sign In
+            </Button>
           </CardContent>
         </Card>
       ) : (

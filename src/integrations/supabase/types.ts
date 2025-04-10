@@ -9,7 +9,149 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      ai_connections: {
+        Row: {
+          api_key_encrypted: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          model: string
+          provider: string
+          user_id: string | null
+        }
+        Insert: {
+          api_key_encrypted?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          model: string
+          provider: string
+          user_id?: string | null
+        }
+        Update: {
+          api_key_encrypted?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          model?: string
+          provider?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      chatbots: {
+        Row: {
+          appearance: Json | null
+          created_at: string | null
+          custom_prompt: string | null
+          description: string | null
+          id: string
+          industry: string | null
+          knowledge_base: Json | null
+          language: string | null
+          name: string
+          template: string | null
+          user_id: string | null
+        }
+        Insert: {
+          appearance?: Json | null
+          created_at?: string | null
+          custom_prompt?: string | null
+          description?: string | null
+          id?: string
+          industry?: string | null
+          knowledge_base?: Json | null
+          language?: string | null
+          name: string
+          template?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          appearance?: Json | null
+          created_at?: string | null
+          custom_prompt?: string | null
+          description?: string | null
+          id?: string
+          industry?: string | null
+          knowledge_base?: Json | null
+          language?: string | null
+          name?: string
+          template?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      faqs: {
+        Row: {
+          answer: string
+          created_at: string | null
+          id: string
+          question: string
+          scraping_task_id: string | null
+          source_url: string | null
+          user_id: string | null
+        }
+        Insert: {
+          answer: string
+          created_at?: string | null
+          id?: string
+          question: string
+          scraping_task_id?: string | null
+          source_url?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          answer?: string
+          created_at?: string | null
+          id?: string
+          question?: string
+          scraping_task_id?: string | null
+          source_url?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faqs_scraping_task_id_fkey"
+            columns: ["scraping_task_id"]
+            isOneToOne: false
+            referencedRelation: "scraping_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scraping_tasks: {
+        Row: {
+          completed_pages: number | null
+          created_at: string | null
+          id: string
+          raw_content: Json | null
+          status: string | null
+          total_pages: number | null
+          url: string
+          user_id: string | null
+        }
+        Insert: {
+          completed_pages?: number | null
+          created_at?: string | null
+          id?: string
+          raw_content?: Json | null
+          status?: string | null
+          total_pages?: number | null
+          url: string
+          user_id?: string | null
+        }
+        Update: {
+          completed_pages?: number | null
+          created_at?: string | null
+          id?: string
+          raw_content?: Json | null
+          status?: string | null
+          total_pages?: number | null
+          url?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
